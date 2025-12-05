@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+var app = require("../app");
+var debug = require("debug")("qms-restfullapi:server");
+var http = require("http");
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || "3001");
+app.set("port", port);
+
+// Get Local IP
+const os = require('os');
+const interfaces = os.networkInterfaces();
+let addresses = [];
+for (let k in interfaces) {
+    for (let k2 in interfaces[k]) {
+        let address = interfaces[k][k2];
+        if (address.family === 'IPv4' && !address.internal) {
+            addresses.push(address.address);
+        }
+    }
+}
+
+console.log("Server running on port: " + port, "\n");
+console.log("Local Access: http://localhost:" + port);
+addresses.forEach(ip => {
+    console.log(`Network Access: http://${ip}:${port}`);
+});
+console.log("\nPress Ctrl+C to stop the server. \n");
+
+/**
+ * Create HTTP server.
+ */
+var server = http.createServer(app);
+
+/**
+ * Initialize Socket.io AFTER server is created
+ */
+// const { getIO } = require("../../sockets/realtime"); 
+// getIO(server);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+
+/**
+ * Normalize a port
+ */
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+  if (isNaN(port)) return val;
+  if (port >= 0) return port;
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+function onError(error) {
+  if (error.syscall !== "listen") throw error;
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  debug("Listening on " + bind);
+}
+// require("dotenv").config();

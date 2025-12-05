@@ -1,0 +1,32 @@
+.env
+node_modules/
+
+dist/
+build/
+out/
+frontend/
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+*.tmp
+*.swp
+*.bak
+*.old
+*.orig
+
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Thumbnails
+._*
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
