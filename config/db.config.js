@@ -9,11 +9,13 @@ const sql = require("mssql");
  * Uses ENV if available, falls back to provided defaults.
  */
 const config = {
-    user: process.env.DB_USER || "dhinesh_QMS_WEB_DB",
-    password: process.env.DB_PASSWORD || "QMS_WEB_DB",
-    server: process.env.DB_SERVER || "sql.bsite.net",
-    database: process.env.DB_DATABASE || "dhinesh_QMS_WEB_DB",
-    port: parseInt(process.env.DB_PORT || "1433", 10),
+    user: "dhinesh_QMS_WEB_DB",
+    password: "QMS_WEB_DB",
+    server: "sql.bsite.net",
+    database: "dhinesh_QMS_WEB_DB",
+    port: parseInt("1433", 10),
+    connectionTimeout: 60000,
+    requestTimeout: 60000,
 
     options: {
     instanceName: "MSSQL2016",
@@ -24,7 +26,7 @@ const config = {
   pool: {
     max: 10,
     min: 0,
-    idleTimeoutMillis: 30000,
+      idleTimeoutMillis: 60000,
   },
 };
 
