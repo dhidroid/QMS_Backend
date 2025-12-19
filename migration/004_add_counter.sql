@@ -1,5 +1,5 @@
-USE QMS_WEB_DB;
-GO
+-- USE QMS_WEB_DB;
+-- GO
 
 -- Add CounterName column if it doesn't exist
 IF NOT EXISTS (

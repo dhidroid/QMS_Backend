@@ -1,5 +1,5 @@
-CREATE DATABASE QMS_WEB_DB;
-USE  QMS_WEB_DB
+-- CREATE DATABASE QMS_WEB_DB;
+USE  dhinesh_QMS_WEB_DB
 GO
 
 
@@ -33,7 +33,7 @@ CREATE TABLE Tokens (
     Status NVARCHAR(50) DEFAULT 'pending', -- pending, called, served, cancelled
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME NULL,
-    Extra JSON NULL
+    Extra NVARCHAR(MAX) NULL
 );
 
 CREATE TABLE TokenLogs (

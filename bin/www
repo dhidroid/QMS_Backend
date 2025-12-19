@@ -11,7 +11,7 @@ var http = require("http");
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || "3001");
+var port = normalizePort(process.env.PORT || "4000");
 app.set("port", port);
 
 // Get Local IP
@@ -27,12 +27,7 @@ for (let k in interfaces) {
     }
 }
 
-console.log("Server running on port: " + port, "\n");
-console.log("Local Access: http://localhost:" + port);
-addresses.forEach(ip => {
-    console.log(`Network Access: http://${ip}:${port}`);
-});
-console.log("\nPress Ctrl+C to stop the server. \n");
+const { getPool } = require("../config/db.config.js");
 
 /**
  * Create HTTP server.
@@ -40,17 +35,35 @@ console.log("\nPress Ctrl+C to stop the server. \n");
 var server = http.createServer(app);
 
 /**
- * Initialize Socket.io AFTER server is created
+ * Start Server after DB Connection
  */
-// const { getIO } = require("../../sockets/realtime"); 
-// getIO(server);
+const startServer = async () => {
+  try {
+    console.log("⏳ Initializing Database...");
+    await getPool(); // This triggers connection + migration check
 
-/**
- * Listen on provided port, on all network interfaces.
- */
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
+    /**
+     * Listen on provided port, on all network interfaces.
+     */
+    server.listen(port);
+    server.on("error", onError);
+    server.on("listening", onListening);
+
+    console.log("Server running on port: " + port, "\n");
+    console.log("Local Access: http://localhost:" + port);
+    addresses.forEach(ip => {
+      console.log(`Network Access: http://${ip}:${port}`);
+    });
+    console.log("\nPress Ctrl+C to stop the server. \n");
+
+  } catch (err) {
+    console.error("❌ Critical Error: Could not start server due to DB failure.");
+    console.error(err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 /**
  * Normalize a port

@@ -1,5 +1,5 @@
-USE QMS_WEB_DB;
-GO
+-- USE QMS_WEB_DB;
+-- GO
 
 CREATE OR ALTER PROCEDURE sp_CreateToken
     @FullName NVARCHAR(200),
