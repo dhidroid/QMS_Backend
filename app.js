@@ -65,7 +65,7 @@ app.post("/api/subscribe", async (req, res) => {
   const { subscription } = req.body;
   if (!subscription || !subscription.endpoint)
     return res.status(400).json({ message: "invalid sub" });
-  const { getPool, sql } = require("./db/pool");
+  const { getPool, sql } = require("./config/db.config.js");
   try {
     const pool = await getPool();
     await pool
