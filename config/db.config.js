@@ -28,7 +28,7 @@ let instanceName = strip(env.DB_INSTANCE) || 'MSSQL2016';
 const user = strip(env.DB_USER) || 'dhinesh_QMS_WEB_DB';
 const password = strip(env.DB_PASSWORD) || 'QMS_WEB_DB';
 const database = strip(env.DB_DATABASE) || 'dhinesh_QMS_WEB_DB';
-const port = parseInt(strip(env.DB_PORT) || '1433', 10);
+let port ;
 
 // If DB_SERVER contains a backslash like host\INSTANCE, split it.
 if (server && (server.includes('\\') || server.includes('\\\\'))) {
