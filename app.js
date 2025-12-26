@@ -31,6 +31,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://qms-frontend-inzhv21ql-dhidroid-team.vercel.app",
+  "http://localhost:5173"
 ];
 
 const corsOptions = {
@@ -59,6 +60,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/handler", handlerRoutes);
+app.use("/api/forms", require("./routes/forms"));
 
 
 app.post("/api/subscribe", async (req, res) => {

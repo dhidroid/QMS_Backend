@@ -55,4 +55,15 @@ async function getPushSubs(req, res) {
   }
 }
 
-module.exports = { getTokensByDate, createUser, getPushSubs };
+async function getUsers(req, res) {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().execute("sp_GetUsers");
+    res.json({ users: result.recordset });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "server error" });
+  }
+}
+
+module.exports = { getTokensByDate, createUser, getPushSubs, getUsers };
