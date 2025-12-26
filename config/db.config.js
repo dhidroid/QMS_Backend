@@ -40,6 +40,22 @@ if (server && (server.includes('\\') || server.includes('\\\\'))) {
   }
 }
 
+// If DB_SERVER is provided as host:port, prefer that (and ignore instanceName)
+const hostPortMatch = server.match(/^([^:\[\]]+|\[[^\]]+\]):(\d+)$/);
+if (hostPortMatch) {
+  server = hostPortMatch[1];
+  // override the port parsed earlier
+  const p = parseInt(hostPortMatch[2], 10);
+  if (!Number.isNaN(p)) {
+    // assign to config.port after config built, but update local var
+    // we'll set port variable later
+    // temporarily store in env override
+    process.env.DB_PORT = String(p);
+  }
+  // when a port is explicitly provided in server, instanceName is unnecessary
+  instanceName = undefined;
+}
+
 const config = {
   user,
   password,
@@ -62,6 +78,15 @@ const config = {
     idleTimeoutMillis: 60000,
   },
 };
+
+// Safety: fail fast on accidental localhost in production
+const normalizedServer = (config.server || '').toLowerCase();
+if (process.env.NODE_ENV === 'production' && !process.env.DB_ALLOW_LOCAL) {
+  if (['localhost', '127.0.0.1', '::1'].includes(normalizedServer)) {
+    console.error('❌ Database server resolved to localhost in production. Set DB_SERVER in your Render environment to the remote host.');
+    throw new Error('Refusing to connect to localhost in production. Configure DB_SERVER in environment variables.');
+  }
+}
 
 // If a port is provided explicitly, `mssql` will use it — in that case an instanceName is not needed.
 if (port && port !== 1433) {
