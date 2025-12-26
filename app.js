@@ -25,9 +25,12 @@ var cors = require('cors');
 
 // CORS: allow the production frontend and common dev origins
 const allowedOrigins = [
-  'https://qms-frontend-bice.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
+  "https://qms-frontend-bice.vercel.app",
+  "https://qms-frontend-bice.vercel.app",
+  "https://qms-frontend-git-main-dhidroid-team.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://qms-frontend-inzhv21ql-dhidroid-team.vercel.app",
 ];
 
 const corsOptions = {
