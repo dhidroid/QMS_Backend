@@ -13,38 +13,47 @@ const sql = require("mssql");
 // backslash (e.g. "host\\INSTANCE").
 const env = process.env;
 
-// parse server and instance if given in one value
-let server = env.DB_SERVER || "sql.bsite.net";
-let instanceName = env.DB_INSTANCE || "MSSQL2016";
-if (server && server.includes("\\")) {
-  const parts = server.split('\\\\');
-  // if someone used a single backslash in .env it may come through as a single char
-  if (parts.length === 1) {
-    // try splitting on single backslash
-    const p2 = server.split('\\');
-    if (p2.length > 1) {
-      server = p2[0];
-      instanceName = p2[1];
-    }
-  } else {
+// Helper to strip surrounding quotes and whitespace
+const strip = (s) => {
+  if (!s) return s;
+  let v = s.trim();
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+    v = v.slice(1, -1);
+  }
+  return v;
+};
+
+let server = strip(env.DB_SERVER) || 'sql.bsite.net';
+let instanceName = strip(env.DB_INSTANCE) || 'MSSQL2016';
+const user = strip(env.DB_USER) || 'dhinesh_QMS_WEB_DB';
+const password = strip(env.DB_PASSWORD) || 'QMS_WEB_DB';
+const database = strip(env.DB_DATABASE) || 'dhinesh_QMS_WEB_DB';
+const port = parseInt(strip(env.DB_PORT) || '1433', 10);
+
+// If DB_SERVER contains a backslash like host\INSTANCE, split it.
+if (server && (server.includes('\\') || server.includes('\\\\'))) {
+  // Normalize to single-backslash split
+  const parts = server.split(/\\+/, 2);
+  if (parts.length >= 2) {
     server = parts[0];
     instanceName = parts[1] || instanceName;
   }
 }
 
 const config = {
-  user: "dhinesh_QMS_WEB_DB",
-  password: env.DB_PASSWORD || "QMS_WEB_DB",
-  server: server,
-  database: env.DB_DATABASE || "dhinesh_QMS_WEB_DB",
-  port: parseInt(env.DB_PORT || "1433", 10),
+  user,
+  password,
+  server,
+  database,
+  port,
   connectionTimeout: 60000,
   requestTimeout: 60000,
 
   options: {
-    instanceName: instanceName,
-    encrypt: (typeof env.DB_ENCRYPT !== 'undefined') ? (env.DB_ENCRYPT === 'true' || env.DB_ENCRYPT === '1') : true,
-    trustServerCertificate: (typeof env.DB_TRUST_SERVER_CERTIFICATE !== 'undefined') ? (env.DB_TRUST_SERVER_CERTIFICATE === 'true' || env.DB_TRUST_SERVER_CERTIFICATE === '1') : true,
+    instanceName,
+    // prefer explicit env var, default true for modern SQL setups
+    encrypt: (typeof env.DB_ENCRYPT !== 'undefined') ? (strip(env.DB_ENCRYPT) === 'true' || strip(env.DB_ENCRYPT) === '1') : true,
+    trustServerCertificate: (typeof env.DB_TRUST_SERVER_CERTIFICATE !== 'undefined') ? (strip(env.DB_TRUST_SERVER_CERTIFICATE) === 'true' || strip(env.DB_TRUST_SERVER_CERTIFICATE) === '1') : true,
   },
 
   pool: {
@@ -54,13 +63,18 @@ const config = {
   },
 };
 
+// If a port is provided explicitly, `mssql` will use it — in that case an instanceName is not needed.
+if (port && port !== 1433) {
+  // leave instanceName, but it's safe to log that we'll use host:port
+}
+
 // Helpful debug output so deployment logs show the resolved DB host
-console.log("→ MSSQL config:", {
+console.log('→ MSSQL config:', {
   server: config.server,
   instanceName: config.options.instanceName,
   port: config.port,
   database: config.database,
-  user: config.user ? "<redacted>" : undefined,
+  user: config.user ? '<redacted>' : undefined,
   encrypt: config.options.encrypt,
 });
 
@@ -110,8 +124,6 @@ const initializeDB = async (pool) => {
         }
     } catch (err) {
         console.error('❌ Migration logic failed:', err);
-        // Continue - don't crash the app just because migration check failed, 
-        // though it might fail later if tables are missing.
     }
 };
 
