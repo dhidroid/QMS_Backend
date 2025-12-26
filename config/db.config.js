@@ -23,50 +23,66 @@ const strip = (s) => {
   return v;
 };
 
-let server = strip(env.DB_SERVER) || 'sql.bsite.net';
-let instanceName = strip(env.DB_INSTANCE) || 'MSSQL2016';
-const user = strip(env.DB_USER) || 'dhinesh_QMS_WEB_DB';
-const password = strip(env.DB_PASSWORD) || 'QMS_WEB_DB';
-const database = strip(env.DB_DATABASE) || 'dhinesh_QMS_WEB_DB';
-let port = parseInt(strip(env.DB_PORT) || '1433', 10);
+const server = strip(env.DB_SERVER);
+const instanceName = strip(env.DB_INSTANCE);
+const user = strip(env.DB_USER);
+const password = strip(env.DB_PASSWORD);
+const database = strip(env.DB_DATABASE);
+let port = parseInt(strip(env.DB_PORT), 10);
+
+// Validate required configurations
+const missingVars = [];
+if (!server) missingVars.push('DB_SERVER');
+if (!user) missingVars.push('DB_USER');
+if (!password) missingVars.push('DB_PASSWORD');
+if (!database) missingVars.push('DB_DATABASE');
+
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required database environment variables: ${missingVars.join(', ')}`);
+  // In production, we want to fail hard. In dev, we might tolerate it if the user is just starting up, 
+  // but for this specific "fix connection" task, forcing env vars is safer.
+  throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+}
 
 // If DB_SERVER contains a backslash like host\INSTANCE, split it.
-if (server && (server.includes('\\') || server.includes('\\\\'))) {
-  // Normalize to single-backslash split
-  const parts = server.split(/\\+/, 2);
+// Note: We use a let for server_ to allow modification if needed, though const server above handles the env read.
+// Actually, let's just use the 'server' const and create a config object directly or use a mutable var if we need to split.
+// Refactoring to match the previous flow but with validation:
+
+let finalServer = server;
+let finalInstanceName = instanceName;
+let finalPort = port || 1433;
+
+if (finalServer && (finalServer.includes('\\') || finalServer.includes('\\\\'))) {
+  const parts = finalServer.split(/\\+/, 2);
   if (parts.length >= 2) {
-    server = parts[0];
-    instanceName = parts[1] || instanceName;
+    finalServer = parts[0];
+    finalInstanceName = parts[1] || finalInstanceName;
   }
 }
 
-// If DB_SERVER is provided as host:port, prefer that (and ignore instanceName)
-const hostPortMatch = server.match(/^([^:\[\]]+|\[[^\]]+\]):(\d+)$/);
+// If DB_SERVER is provided as host:port, prefer that
+const hostPortMatch = finalServer.match(/^([^:\[\]]+|\[[^\]]+\]):(\d+)$/);
 if (hostPortMatch) {
-  server = hostPortMatch[1];
-  // override the port parsed earlier
+  finalServer = hostPortMatch[1];
   const p = parseInt(hostPortMatch[2], 10);
   if (!Number.isNaN(p)) {
-    // assign to config.port after config built, but update local var
-    // we'll set port variable later
-    // temporarily store in env override
-    process.env.DB_PORT = String(p);
+    finalPort = p;
   }
-  // when a port is explicitly provided in server, instanceName is unnecessary
-  instanceName = undefined;
+  finalInstanceName = undefined;
 }
 
 const config = {
   user,
   password,
-  server,
+  server: finalServer,
   database,
-  port,
+  port: finalPort,
   connectionTimeout: 60000,
   requestTimeout: 60000,
 
   options: {
-    instanceName,
+    instanceName: finalInstanceName,
     // prefer explicit env var, default true for modern SQL setups
     encrypt: (typeof env.DB_ENCRYPT !== 'undefined') ? (strip(env.DB_ENCRYPT) === 'true' || strip(env.DB_ENCRYPT) === '1') : true,
     trustServerCertificate: (typeof env.DB_TRUST_SERVER_CERTIFICATE !== 'undefined') ? (strip(env.DB_TRUST_SERVER_CERTIFICATE) === 'true' || strip(env.DB_TRUST_SERVER_CERTIFICATE) === '1') : true,
