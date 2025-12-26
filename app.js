@@ -23,8 +23,27 @@ app.set('view engine', 'pug');
 
 var cors = require('cors');
 
+// CORS: allow the production frontend and common dev origins
+const allowedOrigins = [
+  'https://qms-frontend-bice.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // allow non-browser requests like curl/postman (no origin)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+};
+
 app.use(dbMiddleware);
-app.use(cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(logger('dev'));
 app.use(express.json());
