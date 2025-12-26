@@ -28,7 +28,7 @@ let instanceName = strip(env.DB_INSTANCE) || 'MSSQL2016';
 const user = strip(env.DB_USER) || 'dhinesh_QMS_WEB_DB';
 const password = strip(env.DB_PASSWORD) || 'QMS_WEB_DB';
 const database = strip(env.DB_DATABASE) || 'dhinesh_QMS_WEB_DB';
-let port ;
+let port = parseInt(strip(env.DB_PORT) || '1433', 10);
 
 // If DB_SERVER contains a backslash like host\INSTANCE, split it.
 if (server && (server.includes('\\') || server.includes('\\\\'))) {
@@ -97,7 +97,7 @@ if (port && port !== 1433) {
 console.log('→ MSSQL config:', {
   server: config.server,
   instanceName: config.options.instanceName,
-  port: config.port,
+  port: config.port || port,
   database: config.database,
   user: config.user ? '<redacted>' : undefined,
   encrypt: config.options.encrypt,
@@ -172,6 +172,15 @@ const getPool = async () => {
     }
 
     // Create new pool
+    // Log the final connection object we send to mssql (hide sensitive fields)
+    console.log('Connecting to MSSQL with:', {
+      server: config.server,
+      port: config.port || port,
+      database: config.database,
+      user: config.user ? '<redacted>' : undefined,
+      options: config.options,
+    });
+
     pool = await new sql.ConnectionPool(config).connect();
 
     console.log(
@@ -189,7 +198,13 @@ const getPool = async () => {
 
     return pool;
   } catch (error) {
-    console.error("❌ Database connection failed:", error.message);
+    console.error("❌ Database connection failed:", error && error.message ? error.message : error);
+    console.error('Env DB vars:', {
+      DB_SERVER: env.DB_SERVER,
+      DB_PORT: env.DB_PORT,
+      DB_INSTANCE: env.DB_INSTANCE,
+      NODE_ENV: env.NODE_ENV,
+    });
     throw error;
   }
 };
