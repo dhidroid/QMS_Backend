@@ -13,6 +13,7 @@ const authRoutes = require("./routes/auth.js");
 const tokenRoutes = require("./routes/token.js");
 const adminRoutes = require("./routes/admin.js");
 const handlerRoutes = require("./routes/handler.js");
+const notificationRoutes = require("./routes/notification.js");
 
 var app = express();
 
@@ -62,30 +63,11 @@ app.use("/api/token", tokenRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/handler", handlerRoutes);
 app.use("/api/forms", require("./routes/forms"));
+app.use("/api/notification", notificationRoutes);
+app.use("/api/analytics", require("./routes/analytics"));
 
 
-app.post("/api/subscribe", async (req, res) => {
-  const { subscription } = req.body;
-  if (!subscription || !subscription.endpoint)
-    return res.status(400).json({ message: "invalid sub" });
-  const { getPool, sql } = require("./config/db.config.js");
-  try {
-    const pool = await getPool();
-    await pool
-      .request()
-      .input("Endpoint", sql.NVarChar(1000), subscription.endpoint)
-      .input(
-        "Keys",
-        sql.NVarChar(sql.MAX),
-        JSON.stringify(subscription.keys || {})
-      )
-      .execute("sp_AddPushSubscription");
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "err" });
-  }
-});
+
 
 
 // const io = sockets.init(server);

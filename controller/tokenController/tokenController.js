@@ -67,7 +67,7 @@ async function getTokenByGuid(req, res) {
       .input("TokenGuid", sql.UniqueIdentifier, guid)
       .execute("sp_GetTokenByGuid");
     const rec = result.recordset[0];
-    res.json({ token: rec || null });
+    res.json({ success: true, token: rec || null });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "server error" });
@@ -105,4 +105,48 @@ async function getDisplayStatus(req, res) {
   }
 }
 
-module.exports = { createToken, getTokenByGuid, getDisplayStatus };
+async function submitFeedback(req, res) {
+  const { tokenGuid, rating, comments } = req.body;
+  if (!tokenGuid || !rating)
+    return res.status(400).json({ message: "Missing feedback data" });
+
+  try {
+    const pool = await getPool();
+    await pool.request()
+      .input('TokenGuid', sql.UniqueIdentifier, tokenGuid)
+      .input('Rating', sql.Int, rating)
+      .input('Comments', sql.NVarChar(1000), comments || '')
+      .execute('sp_SubmitFeedback');
+
+    res.json({ success: true, message: 'Feedback submitted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function searchToken(req, res) {
+  const { searchTerm } = req.body;
+  if (!searchTerm) {
+    return res.status(400).json({ success: false, message: "Search term required" });
+  }
+
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input("SearchTerm", sql.NVarChar(50), searchTerm)
+      .execute("sp_GetTokenBySearch");
+
+    const record = result.recordset[0];
+    if (record && record.TokenGuid) {
+      return res.json({ success: true, tokenGuid: record.TokenGuid });
+    } else {
+      return res.status(404).json({ success: false, message: "Ticket not found" });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+module.exports = { createToken, getTokenByGuid, getDisplayStatus, submitFeedback, searchToken };

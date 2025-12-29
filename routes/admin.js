@@ -5,6 +5,8 @@ const adminController = require("../controller/auth/adminController.js");
 
 // require admin role
 router.get("/tokens", auth("admin"), adminController.getTokensByDate);
+router.get("/tickets", auth("admin"), adminController.getTickets); // New Advanced Search Endpoint
+router.get("/all-tokens", auth("admin"), adminController.getAllTokens); // Fetch ALL tokens (for export/analytics)
 // router.get("/users", auth("admin"), adminController.getUsers); 
 router.get("/users", adminController.getUsers); // Temp: removed auth for easier testing if needed, or keeping consistency with create-user which seems public in code (line 8) but should be protected. 
 // Actually line 8 verify: router.post("/create-user", adminController.createUser); is public! 

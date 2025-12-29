@@ -40,4 +40,62 @@ async function login(req, res) {
   }
 }
 
-module.exports = { login };
+const { hashPassword } = require("../../utils/helpers.js");
+
+async function getProfile(req, res) {
+  try {
+    const pool = await getPool();
+    const result = await pool
+      .request()
+      .input("Id", sql.Int, req.user.id)
+      .query("SELECT UserId, Username, DisplayName, Role FROM Users WHERE UserId = @Id");
+
+    if (result.recordset.length === 0) return res.status(404).json({ message: "User not found" });
+
+    res.json(result.recordset[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function updateProfile(req, res) {
+  const { displayName, password, newPassword } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const pool = await getPool();
+
+    // If changing password, verify old password first
+    if (newPassword) {
+      if (!password) return res.status(400).json({ message: "Current password required" });
+
+      const userRes = await pool.request().input("Id", sql.Int, userId).query("SELECT PasswordHash FROM Users WHERE UserId = @Id");
+      if (!userRes.recordset[0]) return res.status(404).json({ message: "User not found" });
+
+      const valid = await comparePassword(password, userRes.recordset[0].PasswordHash);
+      if (!valid) return res.status(400).json({ message: "Incorrect current password" });
+
+      const hash = await hashPassword(newPassword);
+      await pool.request()
+        .input("Id", sql.Int, userId)
+        .input("Pass", sql.NVarChar, hash)
+        .query("UPDATE Users SET PasswordHash = @Pass WHERE UserId = @Id");
+    }
+
+    if (displayName) {
+      await pool.request()
+        .input("Id", sql.Int, userId)
+        .input("Name", sql.NVarChar, displayName)
+        .query("UPDATE Users SET DisplayName = @Name WHERE UserId = @Id");
+    }
+
+    res.json({ success: true, message: "Profile updated successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+module.exports = { login, getProfile, updateProfile };

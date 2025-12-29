@@ -17,8 +17,9 @@ async function notifyAllClients(payload) {
     const promises = subs.map((s) => {
       let pushObj;
       try {
-        pushObj = JSON.parse(s.Keys);
+        pushObj = typeof s.Keys === 'string' ? JSON.parse(s.Keys) : s.Keys;
       } catch (e) {
+        // console.warn("Invalid keys JSON", e);
         pushObj = {};
       }
       const pushSubscription = {
